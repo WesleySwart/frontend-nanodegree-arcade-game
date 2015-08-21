@@ -25,6 +25,8 @@ var Engine = (function(global) {
         ctx = canvas.getContext('2d'),
         lastTime;
 
+    var gameStateEnum = Object.freeze({"Start": 1, "Play": 2, "Pause": 3, "GameOver": 4});
+
     canvas.width = 505;
     canvas.height = 606;
     doc.body.appendChild(canvas);
@@ -80,7 +82,7 @@ var Engine = (function(global) {
      */
     function update(dt) {
         updateEntities(dt);
-        // checkCollisions();
+        checkCollisions();
     }
 
     /* This is called by the update function  and loops through all of the
@@ -160,9 +162,47 @@ var Engine = (function(global) {
      * those sorts of things. It's only called once by the init() method.
      */
     function reset() {
-        // noop
+        // Reset player and enemies to starting locations
+        player.x = 205;
+        player.y = 435;
+
+        var enemyXPosition = -100;
+        var enemyYPositions = [65, 145, 225, 310];
+
+        //Randomize enemy start positions using random Y position array
+        //randomEnemyPosition gets a random integer (0 - 3) for the enemyYPositions index
+        allEnemies.forEach(function(enemy){
+            var randomEnemyPosition = Math.floor(Math.random() * (enemyYPositions.length));
+            enemy.x = enemyXPosition;
+            enemy.y = enemyYPositions[randomEnemyPosition];
+        });
     }
 
+    //Check collisions
+    function checkCollisions(){
+        //Hard-coded width, height for testing (get img width/height from resource)
+        //var width = 101;
+        //var height = 171;
+
+        var playerWidth = 50;
+        var playerHeight = 75;
+        var enemyWidth = 75;
+        var enemyHeight = 75;
+
+        var playerRect = {x: player.x, y: player.y, width: playerWidth, height: playerHeight}
+        
+        allEnemies.forEach(function(enemy){
+            var enemyRect = {x: enemy.x, y: enemy.y, width: enemyWidth, height: enemyHeight}
+
+            if(playerRect.x < enemyRect.x + enemyRect.width &&
+                playerRect.x + playerRect.width > enemyRect.x &&
+                playerRect.y  < enemyRect.y + enemyRect.height &&
+                playerRect.height + playerRect.y > enemyRect.y){
+                console.log("Collision!!");
+            init();
+            }
+        });
+    }
     /* Go ahead and load all of the images we know we're going to need to
      * draw our game level. Then set init as the callback method, so that when
      * all of these images are properly loaded our game will start.
@@ -180,5 +220,7 @@ var Engine = (function(global) {
      * object when run in a browser) so that developer's can use it more easily
      * from within their app.js files.
      */
+
     global.ctx = ctx;
+    global.gameStateEnum = gameStateEnum;
 })(this);

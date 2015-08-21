@@ -47,6 +47,10 @@
              */
             var img = new Image();
             img.onload = function() {
+                //Get width and height of image
+                var width = this.width;
+                var height = this.height;
+
                 /* Once our image has properly loaded, add it to our cache
                  * so that we can simply return this image if the developer
                  * attempts to load this file in the future.

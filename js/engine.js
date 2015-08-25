@@ -23,9 +23,12 @@ var Engine = (function(global) {
         win = global.window,
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
+        startTime = new Date().getTime(),
+        score,
         lastTime;
 
-    var gameStateEnum = Object.freeze({"Start": 1, "Play": 2, "Pause": 3, "GameOver": 4});
+    var gameStateEnum = Object.freeze({"StartMenu": 1, "Running": 2, "Reset": 3, "Pause": 4, "GameOver": 5});
+    gameState = gameStateEnum.Running;
 
     canvas.width = 505;
     canvas.height = 606;
@@ -81,8 +84,15 @@ var Engine = (function(global) {
      * on the entities themselves within your app.js file).
      */
     function update(dt) {
+
+        if(gameState === 3){ //Reset
+            reset();
+            console.log("Reset");
+            gameState = gameStateEnum.Running;
+        }
         updateEntities(dt);
         checkCollisions();
+        drawElapsedTime();
     }
 
     /* This is called by the update function  and loops through all of the
@@ -93,7 +103,12 @@ var Engine = (function(global) {
      * render methods.
      */
     function updateEntities(dt) {
-        allEnemies.forEach(function(enemy) {
+        allEnemies.forEach(function(enemy,i) {
+            //Remove enemy from array on leaving canvas
+            if(enemy.x > ctx.canvas.width){
+            allEnemies.splice(i,1);
+            console.log("Enemy removed");
+        }
             enemy.update(dt);
         });
         player.update();
@@ -180,14 +195,11 @@ var Engine = (function(global) {
 
     //Check collisions
     function checkCollisions(){
-        //Hard-coded width, height for testing (get img width/height from resource)
-        //var width = 101;
-        //var height = 171;
 
-        var playerWidth = 50;
-        var playerHeight = 75;
-        var enemyWidth = 75;
-        var enemyHeight = 75;
+        var playerWidth = player.width;
+        var playerHeight = player.height;
+        var enemyWidth = enemy.width;
+        var enemyHeight = enemy.height;
 
         var playerRect = {x: player.x, y: player.y, width: playerWidth, height: playerHeight}
         
@@ -199,10 +211,26 @@ var Engine = (function(global) {
                 playerRect.y  < enemyRect.y + enemyRect.height &&
                 playerRect.height + playerRect.y > enemyRect.y){
                 console.log("Collision!!");
-            init();
+            init(); //Reset on collision
             }
         });
     }
+
+    //Game Timer
+    function drawElapsedTime(){
+        var timeRemaining = 60; //in secs
+        timeRemaining = timeRemaining - (parseInt((new Date() - startTime)/1000));
+        ctx.save();
+        ctx.beginPath();
+        ctx.fillStyle = "black";
+        ctx.font = "16px Verdana";
+        //draw running time at half opacity
+        ctx.globalAlpha = 0.50;
+        ctx.fillText(timeRemaining + " secs", canvas.width - 75, 25);
+        ctx.restore();
+        //console.log("Time remaining: " + timeRemaining);
+    }
+
     /* Go ahead and load all of the images we know we're going to need to
      * draw our game level. Then set init as the callback method, so that when
      * all of these images are properly loaded our game will start.
@@ -223,4 +251,5 @@ var Engine = (function(global) {
 
     global.ctx = ctx;
     global.gameStateEnum = gameStateEnum;
+    global.gameState = gameState;
 })(this);

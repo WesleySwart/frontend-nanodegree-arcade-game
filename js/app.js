@@ -12,10 +12,11 @@
     TODO:
     1. Collision detection; prevent enemies from spawning on top of each other
     2. Randomize: start position, speed of enemies
-    3. Destroy enemy object on leaving canvas
-    3. Timer, score
-    4. Start, end screen
-    5. Opt: difficulty level, sound
+    3. Spawn enemies (Create interval)
+    4. Destroy enemy object on leaving canvas
+    5. Timer, score
+    6. Start, end screen
+    7. Opt: difficulty level, sound
 */
 
 // Enemies our player must avoid
@@ -28,8 +29,8 @@ var Enemy = function() {
     this.sprite = 'images/enemy-bug.png';
 
     //hitbox dimensions
-    //this.width = Resources.get(this.sprite).width;
-    //this.height = Resources.get(this.sprite).height;
+    this.width = 75;
+    this.height = 75;
 
     speedMin = 30;
     speedMax = 200;
@@ -44,6 +45,7 @@ Enemy.prototype.update = function(dt) {
     // You should multiply any movement by the dt parameter
     // which will ensure the game runs at the same speed for
     // all computers.
+
     this.x += this.speed * dt;
 }
 
@@ -59,8 +61,8 @@ var Player = function(){
     this.sprite = 'images/char-boy.png';
 
     //hitbox dimensions
-    //this.width = Resources.get(this.sprite).width;
-    //this.height = Resources.get(this.sprite).height;
+    this.width = 50;
+    this.height = 75;
 
     this.speed = 30; //Initial speed
 }
@@ -97,8 +99,8 @@ Player.prototype.handleInput = function(allowedKeys){
             }
             else{
                 //Win/score
-                gameStateEnum = 2;
-                console.log("State: " + gameStateEnum.toString());
+                gameState = gameStateEnum.Reset;
+                console.log("State: " + gameState.toString());
             }
             break;
         case 'down':
@@ -113,18 +115,27 @@ Player.prototype.handleInput = function(allowedKeys){
 // Place all enemy objects in an array called allEnemies
 // Place the player object in a variable called player
 var player = new Player();
-//var enemy = new Enemy();
+var enemy = new Enemy();
+var spawnRate = 3000; //in milliseconds
+
 allEnemies = [];
+allEnemies.push(enemy);
 
-var min = 1;
-var max = 4;
-enemySpawn = Math.floor(Math.random() * (max - min + 1)) + min;
+var spawnInterval = setInterval(function(){
+  newEnemy();
+}, spawnRate);
 
-for (i = min; i <= max; i++){
+function newEnemy(){
+
+    var enemyXPosition = -100;
+    var enemyYPositions = [65, 145, 225, 310];
     var enemy = new Enemy();
+    var randomEnemyPosition = Math.floor(Math.random() * (enemyYPositions.length));
+
+    enemy.x = enemyXPosition;
+    enemy.y = enemyYPositions[randomEnemyPosition];
     allEnemies.push(enemy);
 }
-
 
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method. You don't need to modify this.

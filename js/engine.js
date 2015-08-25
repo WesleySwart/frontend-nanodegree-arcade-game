@@ -92,7 +92,6 @@ var Engine = (function(global) {
         }
         updateEntities(dt);
         checkCollisions();
-        drawElapsedTime();
     }
 
     /* This is called by the update function  and loops through all of the
@@ -107,7 +106,7 @@ var Engine = (function(global) {
             //Remove enemy from array on leaving canvas
             if(enemy.x > ctx.canvas.width){
             allEnemies.splice(i,1);
-            console.log("Enemy removed");
+            //console.log("Enemy removed");
         }
             enemy.update(dt);
         });
@@ -177,20 +176,9 @@ var Engine = (function(global) {
      * those sorts of things. It's only called once by the init() method.
      */
     function reset() {
-        // Reset player and enemies to starting locations
+        // Reset player to starting location
         player.x = 205;
         player.y = 435;
-
-        var enemyXPosition = -100;
-        var enemyYPositions = [65, 145, 225, 310];
-
-        //Randomize enemy start positions using random Y position array
-        //randomEnemyPosition gets a random integer (0 - 3) for the enemyYPositions index
-        allEnemies.forEach(function(enemy){
-            var randomEnemyPosition = Math.floor(Math.random() * (enemyYPositions.length));
-            enemy.x = enemyXPosition;
-            enemy.y = enemyYPositions[randomEnemyPosition];
-        });
     }
 
     //Check collisions
@@ -211,25 +199,12 @@ var Engine = (function(global) {
                 playerRect.y  < enemyRect.y + enemyRect.height &&
                 playerRect.height + playerRect.y > enemyRect.y){
                 console.log("Collision!!");
+                player.score -= 5; //Deduct points for collision
             init(); //Reset on collision
             }
         });
     }
 
-    //Game Timer
-    function drawElapsedTime(){
-        var timeRemaining = 60; //in secs
-        timeRemaining = timeRemaining - (parseInt((new Date() - startTime)/1000));
-        ctx.save();
-        ctx.beginPath();
-        ctx.fillStyle = "black";
-        ctx.font = "16px Verdana";
-        //draw running time at half opacity
-        ctx.globalAlpha = 0.50;
-        ctx.fillText(timeRemaining + " secs", canvas.width - 75, 25);
-        ctx.restore();
-        //console.log("Time remaining: " + timeRemaining);
-    }
 
     /* Go ahead and load all of the images we know we're going to need to
      * draw our game level. Then set init as the callback method, so that when

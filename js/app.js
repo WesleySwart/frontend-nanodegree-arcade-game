@@ -1,24 +1,3 @@
-/* NOTES
-    left -x
-    right +x
-    up -y
-    down +y
-
-    max x = 410
-    max y = 435
-    min x = 0
-    min y = 0
-
-    TODO:
-    1. Collision detection; prevent enemies from spawning on top of each other
-    2. Randomize: start position, speed of enemies
-    3. Spawn enemies (Create interval)
-    4. Destroy enemy object on leaving canvas
-    5. Timer, score
-    6. Start, end screen
-    7. Opt: difficulty level, sound
-*/
-
 // Enemies our player must avoid
 var Enemy = function() {
     // Variables applied to each of our instances go here,
@@ -65,16 +44,22 @@ var Player = function(){
     this.height = 75;
 
     this.speed = 30; //Initial speed
+
+    this.score = 0;
 }
 
 Player.prototype.update = function(){
 
-    //Check collisions
-
+    if(this.score < 0){
+        this.score = 0;
+    }
 }
 
 Player.prototype.render = function(){
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+    ctx.fillStyle = "white";
+    ctx.font = '36px Verdana';
+    ctx.fillText("Score: " + this.score, 15, 90);
 }
 
 Player.prototype.handleInput = function(allowedKeys){
@@ -98,7 +83,8 @@ Player.prototype.handleInput = function(allowedKeys){
                 this.y -= this.speed;
             }
             else{
-                //Win/score
+                //Player reached the water. Add score and reset player.
+                this.score += 10;
                 gameState = gameStateEnum.Reset;
                 console.log("State: " + gameState.toString());
             }
@@ -117,7 +103,7 @@ Player.prototype.handleInput = function(allowedKeys){
 var player = new Player();
 var enemy = new Enemy();
 var spawnRate = 3000; //in milliseconds
-
+var startTime = new Date().getTime();
 allEnemies = [];
 allEnemies.push(enemy);
 
@@ -125,6 +111,7 @@ var spawnInterval = setInterval(function(){
   newEnemy();
 }, spawnRate);
 
+//Create new enemy using random positions
 function newEnemy(){
 
     var enemyXPosition = -100;
@@ -136,6 +123,42 @@ function newEnemy(){
     enemy.y = enemyYPositions[randomEnemyPosition];
     allEnemies.push(enemy);
 }
+
+//Game Timer
+function createTimer(seconds){
+    interval = setInterval(function(){
+        ctx.beginPath();
+        if(seconds === 0){
+            clearInterval(interval);
+            ctx.font = "20px Verdana";
+            ctx.fillStyle = "red";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("Time's up!", ctx.canvas.width - 75, 25);
+            return;
+        }
+        ctx.font = "20px Verdana";
+        if(seconds <= 10 && seconds > 5){
+            ctx.fillStyle = "orangered";
+        }
+        else if(seconds <= 5){
+            ctx.fillStyle = "red";
+        }
+        else{
+            ctx.fillStyle = "black";
+        }
+        var minutes = Math.floor(seconds/60);
+        var secs = (seconds - minutes* 60).toString();
+        if(secs.length === 1){
+            secs = "0" + secs;
+        }
+        ctx.fillText(minutes.toString() + ":" + secs, ctx.canvas.width - 75, 25);
+        seconds--;
+        ctx.closePath();
+    }, 1000);
+}
+
+createTimer(10);
 
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method. You don't need to modify this.

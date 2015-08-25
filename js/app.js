@@ -158,7 +158,7 @@ function createTimer(seconds){
     }, 1000);
 }
 
-createTimer(10);
+//createTimer(10);
 
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method. You don't need to modify this.

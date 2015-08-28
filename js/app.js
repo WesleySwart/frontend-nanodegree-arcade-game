@@ -16,7 +16,9 @@ var Enemy = function() {
 
     //Initial speed
     this.speed = Math.floor(Math.random() * (speedMax - speedMin)) + speedMin;
-}
+
+    this.spawnRate = 3000;
+};
 
 // Update the enemy's position, required method for game
 // Parameter: dt, a time delta between ticks
@@ -26,12 +28,13 @@ Enemy.prototype.update = function(dt) {
     // all computers.
 
     this.x += this.speed * dt;
-}
+
+};
 
 // Draw the enemy on the screen, required method for game
 Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-}
+};
 
 // Now write your own player class
 // This class requires an update(), render() and
@@ -45,26 +48,25 @@ var Player = function(){
 
     this.speed = 30; //Initial speed
 
-    this.score = 0;
-}
+    //this.score = 0;
+};
 
 Player.prototype.update = function(){
 
-    if(this.score < 0){
-        this.score = 0;
-    }
-}
+};
 
 Player.prototype.render = function(){
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-    ctx.fillStyle = "white";
-    ctx.font = '36px Verdana';
-    ctx.fillText("Score: " + this.score, 15, 90);
-}
+};
 
 Player.prototype.handleInput = function(allowedKeys){
 
     var key = allowedKeys;
+
+    //Prevents player from moving during pause
+    if(isPaused && key != 'space'){
+        return;
+    }
 
     //Set boundaries and move player
     switch(key){
@@ -84,9 +86,9 @@ Player.prototype.handleInput = function(allowedKeys){
             }
             else{
                 //Player reached the water. Add score and reset player.
-                this.score += 10;
+                scoreBoard.score += 10;
                 gameState = gameStateEnum.Reset;
-                console.log("State: " + gameState.toString());
+                //console.log("State: " + gameState.toString());
             }
             break;
         case 'down':
@@ -94,6 +96,87 @@ Player.prototype.handleInput = function(allowedKeys){
                 this.y += this.speed;
             }
             break;
+        case 'space':
+            //Pause or unpause game
+            isPaused = !isPaused;
+            if(isPaused){
+                /*console.log("Pause Game");
+                timer.stopTimer();
+                stopSpawnInterval();*/
+                pauseGame();
+            }
+            else{
+                /*console.log("Unpause Game");
+                resumeGame = true;
+                timer.startTimer();
+                newEnemy();
+                startSpawnInterval(enemy.spawnRate);*/
+                unpauseGame();
+            }
+    }
+};
+
+var ScoreBoard = function(){
+    this.textColor = 'white';
+    this.fontSize = '32px Verdana';
+    this.score = 0;
+};
+
+ScoreBoard.prototype.update = function(){
+    
+    if(this.score < 0){
+        this.score = 0;
+    }
+};
+
+ScoreBoard.prototype.render = function(){
+    ctx.fillStyle = this.textColor;
+    ctx.font = this.fontSize;
+    ctx.fillText("Score: " + this.score, 15, 125);
+};
+
+var Timer = function(){
+    this.textColor = 'white';
+    this.fontSize = '32px Verdana';
+    this.isRunning = false;
+    this.startTime = 0;
+    this.duration = 60;
+    this.timeLeft = 0;
+};
+
+Timer.prototype.update = function(){
+    if(this.isRunning){
+        this.timeLeft = this.duration - parseInt((Date.now() - this.startTime)/1000);
+        if(this.timeLeft <= 0){
+            this.timeLeft = 0;
+            this.stopTimer();
+            gameState = gameStateEnum.GameOver;
+        }
+    }
+};
+
+Timer.prototype.startTimer = function(){
+    this.isRunning = true;
+    this.startTime = Date.now();
+};
+
+Timer.prototype.stopTimer = function(){
+    this.isRunning = false;
+    //Pause timer. Maintains time left by setting it equal to itself when paused.
+    if(isPaused){
+        this.duration = this.timeLeft;
+    }
+};
+
+Timer.prototype.render = function(){
+    ctx.fillStyle = this.textColor;
+    ctx.font = this.fontSize;
+
+    if(this.timeLeft === 0){
+        ctx.fillText("Time's up!", 15, 90);
+    }
+    else{
+        ctx.fillText("Time left: " + this.timeLeft, 15, 90);
     }
 };
 
@@ -102,14 +185,23 @@ Player.prototype.handleInput = function(allowedKeys){
 // Place the player object in a variable called player
 var player = new Player();
 var enemy = new Enemy();
-var spawnRate = 3000; //in milliseconds
-var startTime = new Date().getTime();
-allEnemies = [];
-allEnemies.push(enemy);
+var scoreBoard = new ScoreBoard();
+var spawnRate = enemy.spawnRate; //in milliseconds
+var spawnInterval;
+var timer = new Timer();
 
-var spawnInterval = setInterval(function(){
-  newEnemy();
-}, spawnRate);
+timer.startTimer();
+allEnemies = [];
+newEnemy();
+startSpawnInterval(spawnRate);
+
+function startSpawnInterval(spawnRate ){
+    spawnInterval = setInterval(newEnemy, spawnRate);
+}
+
+function stopSpawnInterval(){
+    clearInterval(spawnInterval);
+}
 
 //Create new enemy using random positions
 function newEnemy(){
@@ -124,46 +216,25 @@ function newEnemy(){
     allEnemies.push(enemy);
 }
 
-//Game Timer
-function createTimer(seconds){
-    interval = setInterval(function(){
-        ctx.beginPath();
-        if(seconds === 0){
-            clearInterval(interval);
-            ctx.font = "20px Verdana";
-            ctx.fillStyle = "red";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText("Time's up!", ctx.canvas.width - 75, 25);
-            return;
-        }
-        ctx.font = "20px Verdana";
-        if(seconds <= 10 && seconds > 5){
-            ctx.fillStyle = "orangered";
-        }
-        else if(seconds <= 5){
-            ctx.fillStyle = "red";
-        }
-        else{
-            ctx.fillStyle = "black";
-        }
-        var minutes = Math.floor(seconds/60);
-        var secs = (seconds - minutes* 60).toString();
-        if(secs.length === 1){
-            secs = "0" + secs;
-        }
-        ctx.fillText(minutes.toString() + ":" + secs, ctx.canvas.width - 75, 25);
-        seconds--;
-        ctx.closePath();
-    }, 1000);
+function pauseGame(){
+    console.log("Pause Game");
+    timer.stopTimer();
+    stopSpawnInterval();
 }
 
-//createTimer(10);
+function unpauseGame(){
+    console.log("Unpause Game");
+    resumeGame = true;
+    timer.startTimer();
+    newEnemy();
+    startSpawnInterval(enemy.spawnRate);
+}
 
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method. You don't need to modify this.
 document.addEventListener('keyup', function(e) {
     var allowedKeys = {
+        32: 'space',
         37: 'left',
         38: 'up',
         39: 'right',

@@ -23,12 +23,12 @@ var Engine = (function(global) {
         win = global.window,
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
-        startTime = new Date().getTime(),
-        score,
         lastTime;
 
     var gameStateEnum = Object.freeze({"StartMenu": 1, "Running": 2, "Reset": 3, "Pause": 4, "GameOver": 5});
     gameState = gameStateEnum.Running;
+    isPaused = false;
+    resumeGame = false;
 
     canvas.width = 505;
     canvas.height = 606;
@@ -38,30 +38,60 @@ var Engine = (function(global) {
      * and handles properly calling the update and render methods.
      */
     function main() {
-        /* Get our time delta information which is required if your game
-         * requires smooth animation. Because everyone's computer processes
-         * instructions at different speeds we need a constant value that
-         * would be the same for everyone (regardless of how fast their
-         * computer is) - hurray time!
-         */
-        var now = Date.now(),
-            dt = (now - lastTime) / 1000.0;
+        //Check game state
+        if(gameState === 5){
+            console.log("Game Over");
+            endGame();
+        }
+        else if(gameState === 3){
+            console.log("Reset Player");
+            gameState = gameStateEnum.Running;
+            init();
+        }
+        //Running or paused
+        else{
+            /* Get our time delta information which is required if your game
+             * requires smooth animation. Because everyone's computer processes
+             * instructions at different speeds we need a constant value that
+             * would be the same for everyone (regardless of how fast their
+             * computer is) - hurray time!
+             */
+             var now;
+             
+             //Sets time delta to 0 during pause to prevent from updating while paused.
+             if(isPaused){
+                now = lastTime;
+             }
+             else{
+                /* Maintains enemy and player current positions by setting time delta to 0 
+                 * on unpause using resumeGame flag to prevent enemies from 'jumping' 
+                 * to new position when game resumes. Resumes game loop using time delta 
+                 * after initial unpause by switching off resumeGame flag.
+                 */
+                now = Date.now();
+                if(resumeGame){
+                    lastTime = now;
+                    resumeGame = !resumeGame
+                }
+             }
+             var dt = (now-lastTime)/1000;
 
-        /* Call our update/render functions, pass along the time delta to
-         * our update function since it may be used for smooth animation.
-         */
-        update(dt);
-        render();
+            /* Call our update/render functions, pass along the time delta to
+             * our update function since it may be used for smooth animation.
+             */
+            update(dt);
+            render();
 
-        /* Set our lastTime variable which is used to determine the time delta
-         * for the next time this function is called.
-         */
-        lastTime = now;
+            /* Set our lastTime variable which is used to determine the time delta
+             * for the next time this function is called.
+             */
+            lastTime = now;
 
-        /* Use the browser's requestAnimationFrame function to call this
-         * function again as soon as the browser is able to draw another frame.
-         */
-        win.requestAnimationFrame(main);
+            /* Use the browser's requestAnimationFrame function to call this
+             * function again as soon as the browser is able to draw another frame.
+             */
+            win.requestAnimationFrame(main);
+        }
     };
 
     /* This function does some initial setup that should only occur once,
@@ -85,11 +115,6 @@ var Engine = (function(global) {
      */
     function update(dt) {
 
-        if(gameState === 3){ //Reset
-            reset();
-            console.log("Reset");
-            gameState = gameStateEnum.Running;
-        }
         updateEntities(dt);
         checkCollisions();
     }
@@ -111,6 +136,8 @@ var Engine = (function(global) {
             enemy.update(dt);
         });
         player.update();
+        scoreBoard.update();
+        timer.update();
     }
 
     /* This function initially draws the "game level", it will then call
@@ -169,6 +196,8 @@ var Engine = (function(global) {
         });
 
         player.render();
+        scoreBoard.render();
+        timer.render();
     }
 
     /* This function does nothing but it could have been a good place to
@@ -179,6 +208,19 @@ var Engine = (function(global) {
         // Reset player to starting location
         player.x = 205;
         player.y = 435;
+    }
+
+    function stopPause(){
+        clearInterval(pauseGameInterval);
+    }
+
+    function endGame(){
+        //Stop spawning enemies
+        stopSpawnInterval();
+        //Remove all enemies from array
+        allEnemies.forEach(function(enemy,i) {
+            allEnemies.splice(i,1);
+        });
     }
 
     //Check collisions
@@ -199,7 +241,7 @@ var Engine = (function(global) {
                 playerRect.y  < enemyRect.y + enemyRect.height &&
                 playerRect.height + playerRect.y > enemyRect.y){
                 console.log("Collision!!");
-                player.score -= 5; //Deduct points for collision
+                scoreBoard.score -= 5; //Deduct points for collision
             init(); //Reset on collision
             }
         });
@@ -227,4 +269,6 @@ var Engine = (function(global) {
     global.ctx = ctx;
     global.gameStateEnum = gameStateEnum;
     global.gameState = gameState;
+    global.isPaused = isPaused;
+    global.resumeGame = resumeGame;
 })(this);

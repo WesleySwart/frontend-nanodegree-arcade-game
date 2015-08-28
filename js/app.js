@@ -100,17 +100,9 @@ Player.prototype.handleInput = function(allowedKeys){
             //Pause or unpause game
             isPaused = !isPaused;
             if(isPaused){
-                /*console.log("Pause Game");
-                timer.stopTimer();
-                stopSpawnInterval();*/
                 pauseGame();
             }
             else{
-                /*console.log("Unpause Game");
-                resumeGame = true;
-                timer.startTimer();
-                newEnemy();
-                startSpawnInterval(enemy.spawnRate);*/
                 unpauseGame();
             }
     }

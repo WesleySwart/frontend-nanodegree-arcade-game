@@ -14,9 +14,10 @@ var Enemy = function() {
     speedMin = 30;
     speedMax = 200;
 
-    //Initial speed
+    //Initial speed randomized from min to max
     this.speed = Math.floor(Math.random() * (speedMax - speedMin)) + speedMin;
 
+    //Spawn rate of enemies in milliseconds
     this.spawnRate = 3000;
 };
 
@@ -46,9 +47,8 @@ var Player = function(){
     this.width = 50;
     this.height = 75;
 
-    this.speed = 30; //Initial speed
-
-    //this.score = 0;
+    //Initial speed
+    this.speed = 30; 
 };
 
 Player.prototype.update = function(){
@@ -114,8 +114,9 @@ var ScoreBoard = function(){
     this.score = 0;
 };
 
-ScoreBoard.prototype.update = function(){
-    
+ScoreBoard.prototype.update = function(){   
+    //Sets the minimum possible score to 0
+    //since collisions can result in a negative value
     if(this.score < 0){
         this.score = 0;
     }
@@ -137,8 +138,13 @@ var Timer = function(){
 };
 
 Timer.prototype.update = function(){
+    //Calculate time left while the game is running
     if(this.isRunning){
         this.timeLeft = this.duration - parseInt((Date.now() - this.startTime)/1000);
+        /*Game is over when timeLeft is reduced to 0. Sets the minimum
+         *timeLeft to 0 since continuing the loop can result in negative value.
+         *Stops timer and sets the global game state to GameOver.
+         */
         if(this.timeLeft <= 0){
             this.timeLeft = 0;
             this.stopTimer();
@@ -163,7 +169,8 @@ Timer.prototype.stopTimer = function(){
 Timer.prototype.render = function(){
     ctx.fillStyle = this.textColor;
     ctx.font = this.fontSize;
-
+    // Renders timeLeft on canvas. Renders Time's up! when timer is 0
+    // because game is over.
     if(this.timeLeft === 0){
         ctx.fillText("Time's up!", 15, 90);
     }
@@ -187,10 +194,12 @@ allEnemies = [];
 newEnemy();
 startSpawnInterval(spawnRate);
 
-function startSpawnInterval(spawnRate ){
+//Spawns new enemies at enemy spawn rate
+function startSpawnInterval(spawnRate){
     spawnInterval = setInterval(newEnemy, spawnRate);
 }
 
+//Stops enemy spawns
 function stopSpawnInterval(){
     clearInterval(spawnInterval);
 }
@@ -208,12 +217,20 @@ function newEnemy(){
     allEnemies.push(enemy);
 }
 
+/* Pause game
+ * Stop timer and enemy spawns while paused to prevent enemy spawn 
+ * interval from creating new enemies while paused.
+ */
 function pauseGame(){
     console.log("Pause Game");
     timer.stopTimer();
     stopSpawnInterval();
 }
 
+/* Resume game
+ * Start timer, spawn new enemy immediately, and restart enemy spanws 
+ * since we stopped enemy spawns during pause.
+*/
 function unpauseGame(){
     console.log("Unpause Game");
     resumeGame = true;

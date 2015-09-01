@@ -25,6 +25,10 @@ var Engine = (function(global) {
         ctx = canvas.getContext('2d'),
         lastTime;
 
+    /* Creates enumeration for game states and sets the game state to running,
+     * when the game starts. Creates global variables isPaused and resumeGame
+     * as flags to determine if the game is paused when the game resumes.
+     */
     var gameStateEnum = Object.freeze({"StartMenu": 1, "Running": 2, "Reset": 3, "Pause": 4, "GameOver": 5});
     gameState = gameStateEnum.Running;
     isPaused = false;
@@ -71,7 +75,7 @@ var Engine = (function(global) {
                 now = Date.now();
                 if(resumeGame){
                     lastTime = now;
-                    resumeGame = !resumeGame
+                    resumeGame = !resumeGame;
                 }
              }
              var dt = (now-lastTime)/1000;
@@ -92,7 +96,7 @@ var Engine = (function(global) {
              */
             win.requestAnimationFrame(main);
         }
-    };
+    }
 
     /* This function does some initial setup that should only occur once,
      * particularly setting the lastTime variable that is required for the
@@ -210,10 +214,8 @@ var Engine = (function(global) {
         player.y = 435;
     }
 
-    function stopPause(){
-        clearInterval(pauseGameInterval);
-    }
-
+    //Ends game
+    //Clears enemy spawns and removes them from the allEnemies array
     function endGame(){
         //Stop spawning enemies
         stopSpawnInterval();
@@ -223,7 +225,8 @@ var Engine = (function(global) {
         });
     }
 
-    //Check collisions
+    //Check collisions between player and enemies
+    //Resets the player back to starting position on collision
     function checkCollisions(){
 
         var playerWidth = player.width;
